@@ -295,10 +295,13 @@ const styles = StyleSheet.create({
   },
   inputText: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 13,
     padding: 0,
-    lineHeight: 30,
+    paddingLeft: 8,
+    paddingRight: 8,
+    height: 30,
+    fontSize: 13,
+    lineHeight: 13,
+    textAlignVertical: 'center',
   },
   deleteIcon: {
     width: 16,
