@@ -16,6 +16,14 @@ const screenWidth = Dimensions.get('window').width;
 const titleHeight = 36;
 const itemHeight = 44;
 
+function getLetterList(list = []) {
+  return list && list.length ? list.map(item => item.letter) : [];
+}
+/**
+ * 处理一些渲染时需要用到的信息
+ * @param {*} [list=[]] 待渲染的列表
+ * @return {object} 
+ */
 function handlerNodeInfo (list = []) {
   const letterList = list && list.length ? list.map(item => item.letter) : [];
 
@@ -33,8 +41,10 @@ function handlerNodeInfo (list = []) {
     letterList,
     letterItemHeight,
     letterListHeight,
+    // 字母列表需要上移100，看起来会舒服点
     letterListTop: (screenHeight - letterListHeight) / 2 - 100,
     positions,
+    // 这个10我也不知道怎么回事
     totalHeight: position + 10
   }
 }
@@ -61,19 +71,18 @@ export default class IndexList extends Component {
     }
   }
 
-  componentWillReceiveProps(props) {
-    this.setState({
-      list: props.list,
-      ...handlerNodeInfo(props.list),
-    });
-  }
-
   scrollTo(index) {
     this.listView.scrollTo({
       y: this.state.positions[index], animated: true
     });
   }
 
+  /**
+   * 关键字筛选(搜索功能)
+   *
+   * @param {*} key
+   * @memberof IndexList
+   */
   matchIndexList(key) {
     const newList = [];
     for (const item of this.state.originalList) {
@@ -109,6 +118,7 @@ export default class IndexList extends Component {
       });
       return;
     }
+    // 放个延迟在这
     this.submitDelay = setTimeout(() => {
       this.matchIndexList(value);
     }, 300);
@@ -223,8 +233,6 @@ export default class IndexList extends Component {
   }
 
   render() {
-    console.log(this.state);
-
     return (
       <View style={styles.container}>
         {
