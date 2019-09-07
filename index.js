@@ -66,6 +66,7 @@ export default class IndexList extends Component {
       inputText: '',
       list: props.list,
       originalList: props.list,
+      showDeleteBtn: false,
 
       ...handlerNodeInfo(props.list),
     }
@@ -107,13 +108,15 @@ export default class IndexList extends Component {
 
   onTextChanged(value) {
     this.setState({
-      inputText: value
+      inputText: value,
+      showDeleteBtn: true,
     });
     clearTimeout(this.submitDelay);
     if (!value) {
       const list = [].concat(this.state.originalList)
       this.setState({
         list,
+        showDeleteBtn: false,
         ...handlerNodeInfo(list)
       });
       return;
@@ -126,7 +129,8 @@ export default class IndexList extends Component {
 
   onDeletePress() {
     this.setState({
-      inputText: ''
+      inputText: '',
+      showDeleteBtn: false,
     });
     const list = [].concat(this.state.originalList)
     this.setState({
@@ -158,12 +162,16 @@ export default class IndexList extends Component {
           value={this.state.inputText}
           placeholder={this.state.sharchPlaceholder}
         />
-        <TouchableOpacity onPress={() => this.onDeletePress()}>
-          <Image
-            style={styles.deleteIcon}
-            source={require('./static/delete.png')}
-          />
-        </TouchableOpacity>
+        {
+          this.state.showDeleteBtn ? (
+            <TouchableOpacity onPress={() => this.onDeletePress()}>
+              <Image
+                style={styles.deleteIcon}
+                source={require('./static/delete.png')}
+              />
+            </TouchableOpacity>
+          ) : null
+        }
       </View>
     );
   }
@@ -288,6 +296,9 @@ const styles = StyleSheet.create({
   inputText: {
     flex: 1,
     marginLeft: 8,
+    fontSize: 13,
+    padding: 0,
+    lineHeight: 30,
   },
   deleteIcon: {
     width: 16,
