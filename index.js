@@ -12,6 +12,7 @@ import {
 
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
+const isFullScreen = screenHeight / screenWidth > 1.8;
 
 const titleHeight = 36;
 const itemHeight = 44;
@@ -24,10 +25,10 @@ function getLetterList(list = []) {
  * @param {*} [list=[]] 待渲染的列表
  * @return {object} 
  */
-function handlerNodeInfo (list = []) {
+function handlerNodeInfo (list = [], showSearch) {
   const letterList = list && list.length ? list.map(item => item.letter) : [];
 
-  const letterItemHeight = 26 - letterList.length + 20;
+  const letterItemHeight = 26 - letterList.length + (isFullScreen ? 20 : 18);
   const letterListHeight = letterItemHeight * letterList.length;
   
   const positions = [];
@@ -36,15 +37,14 @@ function handlerNodeInfo (list = []) {
     positions.push(position);
     position += titleHeight + itemHeight * item.childList.length;
   }
-
+  // 字母表要稍有点偏上的感觉
+  const letterListTop = (screenHeight - letterListHeight) / 2 * .6;
   return {
     letterList,
     letterItemHeight,
     letterListHeight,
-    // 字母列表需要上移100，看起来会舒服点
-    letterListTop: (screenHeight - letterListHeight) / 2 - 100,
+    letterListTop: letterListTop - (showSearch ? 22 : 0),
     positions,
-    // 这个10我也不知道怎么回事
     totalHeight: position + 10
   }
 }
@@ -60,7 +60,7 @@ export default class IndexList extends Component {
       childTextName: props.childTextName || 'name',
       titleHeight: props.titleHeight || 36,
       itemHeight: props.itemHeight || 44,
-      emptyText: props.emptyText || 'No Data',
+      emptyText: '',
       sharchPlaceholder: props.sharchPlaceholder || 'Enter keywords to search',
 
       inputText: '',
@@ -68,8 +68,22 @@ export default class IndexList extends Component {
       originalList: props.list,
       showDeleteBtn: false,
 
-      ...handlerNodeInfo(props.list),
+      ...handlerNodeInfo(props.list, props.showSearch),
     }
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.submitDelay);
+    this.submitDelay = null;
+  }
+
+  componentWillReceiveProps(props) {
+    this.setState({
+      list: props.list,
+      originalList: props.list,
+      emptyText: props.emptyText || 'No Data',
+      ...handlerNodeInfo(props.list, props.showSearch),
+    });
   }
 
   scrollTo(index) {
@@ -102,7 +116,7 @@ export default class IndexList extends Component {
     }
     this.setState({
       list: newList,
-      ...handlerNodeInfo(newList),
+      ...handlerNodeInfo(newList, this.state.showSearch),
     });
   }
 
@@ -113,29 +127,21 @@ export default class IndexList extends Component {
     });
     clearTimeout(this.submitDelay);
     if (!value) {
-      const list = [].concat(this.state.originalList)
-      this.setState({
-        list,
-        showDeleteBtn: false,
-        ...handlerNodeInfo(list)
-      });
+      this.onDeletePress();
       return;
     }
-    // 放个延迟在这
     this.submitDelay = setTimeout(() => {
       this.matchIndexList(value);
     }, 300);
   }
 
   onDeletePress() {
+    const list = [].concat(this.state.originalList)
     this.setState({
       inputText: '',
       showDeleteBtn: false,
-    });
-    const list = [].concat(this.state.originalList)
-    this.setState({
       list,
-      ...handlerNodeInfo(list)
+      ...handlerNodeInfo(list, this.state.showSearch),
     });
   }
 
