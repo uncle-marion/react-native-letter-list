@@ -308,6 +308,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 13,
     textAlignVertical: 'center',
+    color: '#333',
   },
   deleteIcon: {
     width: 16,
