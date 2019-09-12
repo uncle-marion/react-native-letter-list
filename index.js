@@ -162,7 +162,6 @@ export default class IndexList extends Component {
           autoCorrect={false}
           clearTextOnFocus={true}
           defaultValue={this.state.searchPlaceholder}
-          maxLength={6}
           onChangeText={value => this.onTextChanged(value)}
           onFocus={() => this.onDeletePress()}
           value={this.state.inputText}
