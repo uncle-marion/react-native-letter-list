@@ -167,6 +167,7 @@ export default class IndexList extends Component {
           onFocus={() => this.onDeletePress()}
           value={this.state.inputText}
           placeholder={this.state.sharchPlaceholder}
+          placeholderTextColor={'#999'}
         />
         {
           this.state.showDeleteBtn ? (
