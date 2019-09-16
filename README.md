@@ -45,7 +45,7 @@ import LetterList from 'react-native-letter-list';
 // 点击列表项时的方法
 outputCityInfo(cityInfo) {
   this.props.navigation.state.params.returnData(cityInfo);
-  LuckinRoute.pop(this.props.navigation);
+  routes.pop(this.props.navigation);
 }
 
 ...

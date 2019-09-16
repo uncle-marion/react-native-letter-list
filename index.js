@@ -33,7 +33,7 @@ function handlerNodeInfo (list = [], showSearch) {
   
   const positions = [];
   let position = 0;
-  for (item of list) {
+  for (const item of list) {
     positions.push(position);
     position += titleHeight + itemHeight * item.childList.length;
   }
