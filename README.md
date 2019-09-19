@@ -14,7 +14,7 @@ A list of content sorted by letter
   titleHeight: props.titleHeight || 36,                       // 字母行需要渲染的高度(列表高度计算)
   itemHeight: props.itemHeight || 44,                         // 列表项需要渲染的高度
   emptyText: props.emptyText || 'No Data',                    // 列表为空时需要渲染的文字
-  sharchPlaceholder: props.sharchPlaceholder || 'Enter keywords to search', // 搜索框的占位
+  placeholder: props.placeholder || 'Enter keywords to search', // 搜索框的占位
   list: props.list,                                           // list 接受的参数参考下面一段代码
 }
 ```

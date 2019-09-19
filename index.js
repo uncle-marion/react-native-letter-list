@@ -1,155 +1,119 @@
-import React, { Component } from 'react';
+'use strict';
+
+import React, {
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
   Dimensions,
   StyleSheet,
+  View,
+  Text,
   TextInput,
   Image,
+  SectionList,
+  TouchableOpacity,
 } from 'react-native';
 
-const screenHeight = Dimensions.get('window').height;
-const screenWidth = Dimensions.get('window').width;
-const isFullScreen = screenHeight / screenWidth > 1.8;
-
-const titleHeight = 36;
-const itemHeight = 44;
-
-function getLetterList(list = []) {
-  return list && list.length ? list.map(item => item.letter) : [];
-}
-/**
- * 处理一些渲染时需要用到的信息
- * @param {*} [list=[]] 待渲染的列表
- * @return {object} 
- */
-function handlerNodeInfo (list = [], showSearch) {
-  const letterList = list && list.length ? list.map(item => item.letter) : [];
-
-  const letterItemHeight = 26 - letterList.length + (isFullScreen ? 20 : 18);
-  const letterListHeight = letterItemHeight * letterList.length;
-  
-  const positions = [];
-  let position = 0;
-  for (const item of list) {
-    positions.push(position);
-    position += titleHeight + itemHeight * item.childList.length;
-  }
-  // 字母表要稍有点偏上的感觉
-  const letterListTop = (screenHeight - letterListHeight) / 2 * .6;
-  return {
-    letterList,
-    letterItemHeight,
-    letterListHeight,
-    letterListTop: letterListTop - (showSearch ? 22 : 0),
-    positions,
-    totalHeight: position + 10
-  }
+const config = {
+  letterName: 'letter',
+  dataName:   'childList',
+  textName:   'name',
+  titleHeight: 36,
+  itemHeight:  44,
+  placeholder: 'Enter keywords to search',
+  emptyText:   'no data',
 }
 
-export default class IndexList extends Component {
-  constructor (props) {
-    super(props);
+export default function IndexList(props) {
+  // Each time a list of raw data is saved in response to filter events in the search box
+  const originList = props.list;
 
-    this.state = {
-      showSearch: props.showSearch || false,
-      letterName: props.letterName || 'letter',
-      childListName: props.childListName || 'childList',
-      childTextName: props.childTextName || 'name',
-      titleHeight: props.titleHeight || 36,
-      itemHeight: props.itemHeight || 44,
-      emptyText: '',
-      sharchPlaceholder: props.sharchPlaceholder || 'Enter keywords to search',
+  const {
+    letterName,
+    dataName,
+    textName,
+    titleHeight,
+    itemHeight,
+    placeholder,
+    emptyText,
+  } = {
+    ...config,
+    ...props,
+  };
 
-      inputText: '',
-      list: props.list,
-      originalList: props.list,
-      showDeleteBtn: false,
+  const listRef = useRef(null);
 
-      ...handlerNodeInfo(props.list, props.showSearch),
-    }
-  }
+  const [sectionList, setList] = useState([]);
+  const [filterKey, setFilterKey] = useState('');
+  const [clearVisible, changeVisible] = useState(false);
 
-  componentWillUnmount() {
-    clearTimeout(this.submitDelay);
-    this.submitDelay = null;
-  }
+  useEffect(() => {
+    filterOriginList('');
+  }, [originList]);
 
-  componentWillReceiveProps(props) {
-    this.setState({
-      list: props.list,
-      originalList: props.list,
-      emptyText: props.emptyText || 'No Data',
-      ...handlerNodeInfo(props.list, props.showSearch),
-    });
-  }
-
-  scrollTo(index) {
-    this.listView.scrollTo({
-      y: this.state.positions[index], animated: true
-    });
-  }
-
-  /**
-   * 关键字筛选(搜索功能)
-   *
-   * @param {*} key
-   * @memberof IndexList
-   */
-  matchIndexList(key) {
-    const newList = [];
-    for (const item of this.state.originalList) {
-      const newChild = {
-        letter: item[this.state.letterName],
-        [this.state.childListName]: [],
-      };
-      for (const child of item[this.state.childListName]) {
-        if (child[this.state.childTextName].indexOf(key) > -1) {
-          newChild[this.state.childListName].push(child);
-        }
+  function filterOriginList(key = '') {
+    const sections = [];
+    originList.map(item => {
+      const data = !key ? item[dataName] : item[dataName].filter(item => item[textName].includes(key));
+      if (data.length) {
+        sections.push({
+          title: item[letterName],
+          data,
+        });
       }
-      if (newChild[this.state.childListName].length) {
-        newList.push(newChild);
-      }
-    }
-    this.setState({
-      list: newList,
-      ...handlerNodeInfo(newList, this.state.showSearch),
+    });
+    setList(sections);
+  }
+
+  function scrollTo(index) {
+    listRef.current.scrollToLocation({
+      sectionIndex: index,
+      itemIndex: 0,
     });
   }
 
-  onTextChanged(value) {
-    this.setState({
-      inputText: value,
-      showDeleteBtn: true,
-    });
-    clearTimeout(this.submitDelay);
-    if (!value) {
-      this.onDeletePress();
-      return;
-    }
-    this.submitDelay = setTimeout(() => {
-      this.matchIndexList(value);
-    }, 300);
-  }
-
-  onDeletePress() {
-    const list = [].concat(this.state.originalList)
-    this.setState({
-      inputText: '',
-      showDeleteBtn: false,
-      list,
-      ...handlerNodeInfo(list, this.state.showSearch),
-    });
-  }
-
-  createSearch() {
-    if (!this.state.showSearch) {
-      return;
-    }
+  function renderLetterList() {
+    const itemHeight = 26 - sectionList.length + (isFullScreen ? 20 : 18);
+    const listHeight = itemHeight * sectionList.length;
+    const listTop = (screenHeight - listHeight) / 2 * .6;
     return (
+      <View style={styles.sideRight}>
+        <View style={{
+          ...styles.touchLetterList,
+          marginTop: listTop,
+          height: listHeight,
+        }}>
+          {
+            sectionList.map((item, index) => {
+              return item.title ? (
+                <TouchableOpacity
+                  style={{height: itemHeight}}
+                  key={index}
+                  activeOpacity={0.75}
+                  onPressIn={() => {
+                    scrollTo(index);
+                  }}
+                >
+                  <Text style={styles.touchLetter}>{item.title}</Text>
+                </TouchableOpacity>
+              ) : null;
+            })
+          }
+        </View>
+      </View>
+    );
+  }
+
+  function filterList(key) {
+    setFilterKey(key);
+    filterOriginList(key);
+    changeVisible(!key ? false : true);
+  }
+
+  function renderSearchModel() {
+    return props.showSearch ? (
       <View style={styles.searchWrap}>
         <Image
           style={styles.searchIcon}
@@ -157,20 +121,23 @@ export default class IndexList extends Component {
         />
         <TextInput
           style={styles.inputText}
+          value={filterKey}
+          placeholder={placeholder}
+          placeholderTextColor={dimgray}
           autoCapitalize={'none'}
           autoComplete={'off'}
           autoCorrect={false}
           clearTextOnFocus={true}
-          defaultValue={this.state.searchPlaceholder}
-          onChangeText={value => this.onTextChanged(value)}
-          onFocus={() => this.onDeletePress()}
-          value={this.state.inputText}
-          placeholder={this.state.sharchPlaceholder}
-          placeholderTextColor={'#999'}
+          onChangeText={filterList}
+          onFocus={
+            () => filterList('')
+          }
         />
         {
-          this.state.showDeleteBtn ? (
-            <TouchableOpacity onPress={() => this.onDeletePress()}>
+          clearVisible ? (
+            <TouchableOpacity onPress={
+              () => filterList('')
+            }>
               <Image
                 style={styles.deleteIcon}
                 source={require('./static/delete.png')}
@@ -179,103 +146,92 @@ export default class IndexList extends Component {
           ) : null
         }
       </View>
-    );
+    ) : null;
   }
 
-  createLetterList() {
-    if (!this.state.letterList.length || this.state.totalHeight < screenHeight) {
-      return;
-    }
+  function renderEmptySections() {
     return (
-      <View style={{
-        ...styles.touchLetterList,
-        marginTop: this.state.letterListTop,
-        height: this.state.letterListHeight,
-      }}>
-        {
-          this.state.letterList.map((letter, index) => {
-            return (
-              <TouchableOpacity
-                style={{height: this.state.letterItemHeight}}
-                key={index}
-                activeOpacity={0.75}
-                onPressIn={() => {
-                  this.scrollTo(index);
-                }}
-              >
-                <Text style={styles.touchLetter}>{letter}</Text>
-              </TouchableOpacity>
-            );
-          })
-        }
+      <View style={{marginTop: 50}}>
+        <Text style={{
+          textAlign: 'center',
+          color: dimgray,
+        }}>
+          {emptyText}
+        </Text>
       </View>
     );
   }
 
-  createChildList(childNode, index) {
+  function renderSectionHeader({section}) {
+    return section.title ? (
+      <View style={{
+        backgroundColor: lightgray,
+        height: titleHeight
+      }}>
+        <Text style={{
+          ...styles.titleText,
+          lineHeight: titleHeight
+        }}>{section.title}</Text>
+      </View>
+    ) : null;
+  }
+
+  function renderSectionItem({item}) {
     return (
       <View
-        style={styles.childNode}
-        key={index}
+        style={{
+          height: itemHeight,
+          marginLeft: 20,
+        }}
       >
-        <View style={styles.childTitle}>
-          <Text style={styles.titleText}>{childNode.letter}</Text>
-        </View>
-        <View style={styles.childList}>
-          {
-            childNode[this.state.childListName] && childNode[this.state.childListName].map((item, index) => {
-              return (
-                <View
-                  style={styles.childItem}
-                  key={index}
-                >
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      this.props.onSelect(item);
-                    }}
-                  >
-                    <Text style={styles.childText}>{ item[this.state.childTextName]}</Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            })
-          }
-        </View>
-      </View>
-    )
-  }
-
-  render() {
-    return (
-      <View style={styles.container}>
-        {
-          this.createSearch()
-        }
-        <View style={{flex: 1}}>
-          <View style={styles.sideRight}>
-            {
-              this.createLetterList()
-            }
-          </View>
-          <ScrollView style={{flex: 1}} ref={view => this.listView = view}>
-            <View style={{height: this.state.totalHeight}}>
-              {
-                this.state.list.length ? this.state.list.map((item, index) => {
-                  return this.createChildList(item, index);
-                }) : (
-                  <View style={styles.emptyList}>
-                    <Text style={styles.emptyText}>{this.state.emptyText}</Text>
-                  </View>
-                )
-              }
-            </View>
-          </ScrollView>
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => {
+            props.onSelect(item);
+          }}
+        >
+          <Text style={{
+            ...styles.childText,
+            lineHeight: itemHeight,
+          }}>
+            {item.name}
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
+
+  return (
+    <View style={styles.container}>
+      {
+        renderSearchModel()
+      }
+      <View style={{flex: 1}}>
+        {
+          renderLetterList()
+        }
+        <SectionList
+          ref={listRef}
+          sections={sectionList}
+          initialNumToRender={20}
+          keyExtractor={(item, index) => index}
+          renderSectionHeader={renderSectionHeader}
+          renderItem={renderSectionItem}
+          ItemSeparatorComponent={() => (<View style={styles.separator}></View>)}
+          ListEmptyComponent={renderEmptySections}
+        />
+      </View>
+    </View>
+  );
 }
+
+const screenHeight = Dimensions.get('window').height;
+const screenWidth = Dimensions.get('window').width;
+const isFullScreen = screenHeight / screenWidth > 1.8;
+const lightgray = '#f5f5f5';
+const gray = '#aaa';
+const dimgray  = '#999';
+const darkgray  = '#333';
 
 const styles = StyleSheet.create({
   container: {
@@ -308,7 +264,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 13,
     textAlignVertical: 'center',
-    color: '#333',
+    color: darkgray,
   },
   deleteIcon: {
     width: 16,
@@ -318,54 +274,39 @@ const styles = StyleSheet.create({
   },
   emptyList: {
     marginTop: 100,
-    height: 100,
-    width: screenWidth
+    width: screenWidth,
   },
   emptyText: {
-    color: '#999',
+    color: dimgray,
     textAlign: 'center',
   },
   sideRight: {
+    width: 20,
+    backgroundColor: '#fff',
     position: 'absolute',
     top: 0,
     bottom: 0,
     right: 0,
-    width: 20,
     zIndex: 9,
-    backgroundColor: '#fff',
   },
   touchLetter: {
     width: 20,
     fontSize: 12,
     textAlign: 'center',
-    color: '#a2a2a2',
-  },
-  childNode: {
-    width: screenWidth,
-  },
-  childTitle: {
-    backgroundColor: '#f7f7f7',
-    height: titleHeight,
-    width: screenWidth,
+    color: gray,
   },
   titleText: {
-    color: '#999',
-    lineHeight: titleHeight,
+    color: dimgray,
     marginLeft: 15,
-    fontSize: 14,
-  },
-  childList: {
-    width: screenWidth,
-  },
-  childItem: {
-    marginLeft: 20,
-    height: itemHeight,
-    borderBottomColor: '#f1f1f1',
-    borderBottomWidth: 0.5,
+    fontSize: 15,
   },
   childText: {
     fontSize: 15,
-    lineHeight: itemHeight,
-    color: '#333',
+    color: darkgray,
+  },
+  separator: {
+    marginLeft: 20,
+    height: .5,
+    backgroundColor: lightgray
   }
 });
