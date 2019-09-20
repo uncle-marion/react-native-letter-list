@@ -1,5 +1,7 @@
 'use strict';
 
+// I'm Sorry, I have been busy recently, and the code will be optimized later…
+
 import React, {
   useState,
   useEffect,
@@ -26,7 +28,7 @@ const config = {
   emptyText:   'no data',
 }
 
-export default function IndexList(props) {
+export default function ReactNativeLetterList(props) {
   // Each time a list of raw data is saved in response to filter events in the search box
   const originList = props.list;
 
@@ -48,6 +50,7 @@ export default function IndexList(props) {
   const [sectionList, setList] = useState([]);
   const [filterKey, setFilterKey] = useState('');
   const [clearVisible, changeVisible] = useState(false);
+  const [layouts, setLayouts] = useState([]);
 
   useEffect(() => {
     filterOriginList('');
@@ -55,6 +58,11 @@ export default function IndexList(props) {
 
   function filterOriginList(key = '') {
     const sections = [];
+    const layouts = [];
+    
+    let offsetTop = 0;
+    let total = 0;
+
     originList.map(item => {
       const data = !key ? item[dataName] : item[dataName].filter(item => item[textName].includes(key));
       if (data.length) {
@@ -62,16 +70,34 @@ export default function IndexList(props) {
           title: item[letterName],
           data,
         });
+        // Temporary use, and later extraction
+        layouts.push({
+          length: titleHeight,
+          offset: offsetTop,
+          index: total,
+        });
+        offsetTop += titleHeight;
+        total += 1;
+        data.map(() => {
+          layouts.push({
+            length: itemHeight,
+            offset: offsetTop,
+            index: total,
+          });
+          offsetTop += itemHeight + .5;
+          total += 1;
+        });
+        layouts.push({
+          length: 0,
+          offset: offsetTop,
+          index: total,
+        });
+        offsetTop -= .5;
+        total += 1;
       }
     });
+    setLayouts(layouts);
     setList(sections);
-  }
-
-  function scrollTo(index) {
-    listRef.current.scrollToLocation({
-      sectionIndex: index,
-      itemIndex: 0,
-    });
   }
 
   function renderLetterList() {
@@ -201,6 +227,15 @@ export default function IndexList(props) {
     );
   }
 
+  function scrollTo(index) {
+    listRef.current.scrollToLocation({
+      animated: true,
+      sectionIndex: index,
+      itemIndex: 0,
+      viewOffset: 0,
+    });
+  }
+
   return (
     <View style={styles.container}>
       {
@@ -214,11 +249,13 @@ export default function IndexList(props) {
           ref={listRef}
           sections={sectionList}
           initialNumToRender={20}
-          keyExtractor={(item, index) => index}
+          keyExtractor={(item, index) => item + index}
           renderSectionHeader={renderSectionHeader}
           renderItem={renderSectionItem}
           ItemSeparatorComponent={() => (<View style={styles.separator}></View>)}
           ListEmptyComponent={renderEmptySections}
+          refreshing={true}
+          getItemLayout={(data, index) => layouts[index]}
         />
       </View>
     </View>
