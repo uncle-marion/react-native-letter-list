@@ -1,25 +1,40 @@
 # react-native-letter-list
+
 A list of content sorted by letter
 
-懒得写了，贴几段代码在这吧，自己看
+## Install
+```npm i -S react-native-letter-list```
 
-
-可配置参数
+## Usage
 ```
-{
-  showSearch: props.showSearch || false,                      // 是否显示搜索框
-  letterName: props.letterName || 'letter',                   // 列表中字母属性名称
-  childListName: props.childListName || 'childList',          // 列表中子列表名称
-  childTextName: props.childTextName || 'name',               // 子列表中需要显示的名称
-  titleHeight: props.titleHeight || 36,                       // 字母行需要渲染的高度(列表高度计算)
-  itemHeight: props.itemHeight || 44,                         // 列表项需要渲染的高度
-  emptyText: props.emptyText || 'No Data',                    // 列表为空时需要渲染的文字
-  placeholder: props.placeholder || 'Enter keywords to search', // 搜索框的占位
-  list: props.list,                                           // list 接受的参数参考下面一段代码
+import LetterList from 'react-native-letter-list';
+
+...
+outputCityInfo(cityInfo) {
+  // You Code
 }
+
+...
+<!-- jsx -->
+<LetterList
+  list={array}                    // section list
+  onSelect={(item) => {}}         // select callback
+
+  // These properties are optional
+  showSearch = {boolean},         // default: false
+  placeholder = {string},         // default: Enter keywords to search
+  letterName = {string},          // default: letter         show to in section header
+  titleHeight = {number},         // default: 36             section header
+  childListName = {string},       // default: childList      section list name
+  childTextName = {string},       // default: name           item content
+  itemHeight = {number}           // default: 44,            item height
+  emptyText = {string}            // default: No Data        display when the list is empty
+
+></LetterList>
+
 ```
 
-接受的列表参数
+## List Sample
 ```
 [
   {
@@ -34,28 +49,4 @@ A list of content sorted by letter
     ...
   }
 ]
-```
-
-调用代码
-```
-// 引入
-import LetterList from 'react-native-letter-list';
-
-...
-// 点击列表项时的方法
-outputCityInfo(cityInfo) {
-  this.props.navigation.state.params.returnData(cityInfo);
-  routes.pop(this.props.navigation);
-}
-
-...
-<!-- jsx -->
-<LetterList
-  list={this.state.cityList}
-  showSearch={true}
-  sharchPlaceholder={'输入城市名字搜索'}
-  emptyText={'暂无数据'}
-  onSelect={this.outputCityInfo.bind(this)}
-></LetterList>
-
 ```
