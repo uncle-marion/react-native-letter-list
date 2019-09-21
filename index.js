@@ -101,14 +101,14 @@ export default function ReactNativeLetterList(props) {
   }
 
   function renderLetterList() {
-    const itemHeight = 26 - sectionList.length + (isFullScreen ? 20 : 18);
+    const itemHeight = 26 - sectionList.length + (isFullScreen ? 20 : 17);
     const listHeight = itemHeight * sectionList.length;
     const listTop = (screenHeight - listHeight) / 2 * .6;
     return (
       <View style={styles.sideRight}>
         <View style={{
           ...styles.touchLetterList,
-          marginTop: listTop,
+          marginTop: props.showSearch ? listTop - 20 : listTop,
           height: listHeight,
         }}>
           {
